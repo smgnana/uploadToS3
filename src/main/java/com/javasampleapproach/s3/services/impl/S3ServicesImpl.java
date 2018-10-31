@@ -34,44 +34,56 @@ public class S3ServicesImpl implements S3Services {
 
 	@Override
 	public void downloadFile(String keyName) {
-		
-		try {
-			
-            System.out.println("Downloading an object");
-            S3Object s3object = s3client.getObject(new GetObjectRequest(
-            		bucketName, keyName));
-            System.out.println("Content-Type: "  + 
-            		s3object.getObjectMetadata().getContentType());
-            Utility.displayText(s3object.getObjectContent());
-            logger.info("===================== Import File - Done! =====================");
-            
-        } catch (AmazonServiceException ase) {
-        	logger.info("Caught an AmazonServiceException from GET requests, rejected reasons:");
-			logger.info("Error Message:    " + ase.getMessage());
-			logger.info("HTTP Status Code: " + ase.getStatusCode());
-			logger.info("AWS Error Code:   " + ase.getErrorCode());
-			logger.info("Error Type:       " + ase.getErrorType());
-			logger.info("Request ID:       " + ase.getRequestId());
-        } catch (AmazonClientException ace) {
-        	logger.info("Caught an AmazonClientException: ");
-            logger.info("Error Message: " + ace.getMessage());
-        } catch (IOException ioe) {
-        	logger.info("IOE Error Message: " + ioe.getMessage());
-		}
+
 	}
 
 	@Override
 	public void uploadFile(String uploadFolderPath) {
 		File folder = new File(uploadFolderPath);
-		File[] files = folder.listFiles();
+		/*File[] files = folder.listFiles();
 		int i = 1;
 		for (File file : files) {
 			logger.info("Upload File - " + (i++) + " of " + files.length + " -> " + file.getName());
 			uploadFile(file);
-		}
+		}*/
+		
+		String[] path = new String[3];
+		
+		for (File year : folder.listFiles()) {
+			path[0] = year.getName();
+			if (!year.isDirectory()){
+				continue;
+			}
+			logger.info("Started year: " + year.getName());
+			
+			for (File month : year.listFiles()){
+				path[1] = month.getName();
+				if (!month.isDirectory()){
+					continue;
+				}
+				logger.info("Started month: " + year.getName() + month.getName());
+				
+				for (File day : month.listFiles()){
+					path[2] = day.getName();
+					if (!day.isDirectory()){
+						continue;
+					}
+					logger.info("Started day: " + year.getName() + month.getName() + day.getName());
+					File[] files = day.listFiles();
+					int i = 1;
+					for (File file : files){
+						uploadFile(file, path);
+						logger.info("Upload File - " + (i++) + " of " + files.length + " -> " + file.getName());
+					}
+					logger.info("Finished day: " + year.getName() + month.getName() + day.getName());
+				}
+				logger.info("Finished month: " + year.getName() + month.getName());
+			}
+			logger.info("Finished year: " + year.getName());
+		}		
 	}
 
-	private void uploadFile(File file) {
+	private void uploadFile(File file, String[] path) {
 		try {
 
 	        String fileName = file.getName().substring(file.getName().indexOf("_") + 1);
